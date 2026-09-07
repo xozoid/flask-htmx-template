@@ -19,11 +19,14 @@
     >
       <label class="input-outlined input-bg-surface-container-high">
         <input name="before" type="date" value="{{ before }}" placeholder="" />
-        <div><div>Before</div></div>
+        <div>
+          <div>Before</div>
+        </div>
       </label>
       <button class="btn-tonal" type="submit">Filter</button>
     </form>
     <button
+      type="button"
       class="btn-tonal"
       hx-get="{{ url_for('items.new') }}"
       hx-disabled-elt="this"
@@ -35,7 +38,6 @@
     </button>
   </div>
 </div>
-
 <div>
   <h2 class="text-xl">Total</h2>
   <h1 class="font-serif text-6xl text-tertiary">{{ ctx.total | comma }}</h1>

@@ -9,9 +9,8 @@
     href="{{ url_for('common.page_dashboard') }}"
     hx-get="{{ url_for('common.page_dashboard') }}"
     hx-disabled-elt="this"
+    >Template</a
   >
-    Template
-  </a>
   <section class="w-min"></section>
   {% for group_label, group in nav_items %}
     {% if not loop.first %}<hr class="mx-2" />{% endif %}
@@ -31,6 +30,7 @@
           </a>
         {% elif link == "DIALOG" %}
           <button
+            type="button"
             hx-get="{{ url_for(endpoint) }}"
             hx-trigger="click"
             hx-disabled-elt="this"
@@ -43,6 +43,7 @@
           </button>
         {% elif link == "HX_POST" %}
           <button
+            type="button"
             hx-post="{{ url_for(endpoint) }}"
             hx-disabled-elt="this"
             hx-push-url="false"

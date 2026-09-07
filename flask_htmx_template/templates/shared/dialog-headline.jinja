@@ -1,11 +1,12 @@
 <div>
   <div>
-    <button class="btn-sq" onclick="dialog.close()">
+    <button type="button" class="btn-sq" onclick="dialog.close()">
       <icon>close</icon>
     </button>
     <h1>{{ headline }}</h1>
     {% if save_url %}
       <button
+        type="button"
         id="dialog-save"
         disabled
         {{ 'hx-' + (save_method or 'put') + '="' + save_url + '"' }}

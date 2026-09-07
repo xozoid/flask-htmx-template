@@ -7,7 +7,6 @@
     <code>application/json</code>. Expand a path to see examples and schema. Any
     request formats will self describe errors in types or missing fields.
   </p>
-
   <section class="mx-auto prose rounded-md bg-surface-container p-3">
     <h2>Calling the API</h2>
     <p>
@@ -48,7 +47,6 @@ curl \
       with indentation. Remove it for compact responses.
     </p>
   </section>
-
   <section class="mx-auto prose rounded-md bg-surface-container p-3">
     <h2>Client errors</h2>
     <p>
@@ -60,12 +58,17 @@ curl \
     </p>
     <div class="flex items-center gap-1 py-1">
       <button
+        type="button"
         class="btn-example btn-tonal"
         onclick="apiDocs.loadSnippet(event)"
       >
         Example
       </button>
-      <button class="btn-schema btn-text" onclick="apiDocs.loadSnippet(event)">
+      <button
+        type="button"
+        class="btn-schema btn-text"
+        onclick="apiDocs.loadSnippet(event)"
+      >
         Schema
       </button>
     </div>
@@ -78,7 +81,6 @@ curl \
     >
 {{- error_response.schema_json | e -}}</pre>
   </section>
-
   {% for group in groups %}
     <section>
       <h2 class="font-serif text-2xl text-primary">{{ group.name }}</h2>

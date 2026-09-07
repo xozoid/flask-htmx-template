@@ -28,6 +28,7 @@
     </div>
   </label>
   <button
+    type="button"
     class="col-span-2 btn-outlined"
     title="Reset to site default"
     hx-delete="{{ url_for('common.theme') }}"
@@ -37,7 +38,6 @@
     <icon>undo</icon>
     Default
   </button>
-
   {# Live palette preview -- updates automatically as CSS variables change #}
   <div class="rounded bg-primary p-1 text-on-primary">Text</div>
   <div class="rounded bg-secondary p-1 text-on-secondary">Text</div>

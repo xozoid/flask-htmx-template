@@ -5,8 +5,8 @@
 >
   <h1>{{ item.name }}</h1>
   <button
-    type="button"
     class="btn-tonal"
+    type="button"
     hx-get="{{ url_for('items.item', uri=item.uri) }}"
     hx-disabled-elt="this"
     hx-target="#dialog"

@@ -28,9 +28,9 @@
     </div>
   </label>
   <button
-    type="button"
     class="col-span-2 btn-outlined"
     title="Reset to site default"
+    type="button"
     hx-delete="{{ url_for('common.theme') }}"
     hx-disabled-elt="this"
     hx-target="body"

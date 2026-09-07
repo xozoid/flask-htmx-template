@@ -76,6 +76,7 @@
   <div class="flex flex-wrap justify-around" hx-target="#dialog-error">
     <button
       class="btn-text-error"
+      type="button"
       hx-delete="{{ url_for('items.item', uri=item.uri) }}"
       hx-trigger="delete"
       hx-disabled-elt="this"

@@ -16,6 +16,7 @@
       </a>
     {% elif link == "DIALOG" %}
       <button
+        type="button"
         hx-get="{{ url_for(endpoint) }}"
         hx-disabled-elt="this"
         hx-target="#dialog"
@@ -27,6 +28,7 @@
       </button>
     {% elif link == "HX_POST" %}
       <button
+        type="button"
         hx-post="{{ url_for(endpoint) }}"
         hx-disabled-elt="this"
         hx-push-url="false"

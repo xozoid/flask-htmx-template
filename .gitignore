@@ -17,7 +17,6 @@ version.py
 
 # Node
 node_modules
-package*
 
 # Test artifacts
 .test

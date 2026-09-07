@@ -253,56 +253,66 @@
 </details>
 <h2 class="font-serif text-2xl text-primary">Buttons</h2>
 <div class="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-2">
-  <button class="btn-filled"><icon>mouse</icon>Filled</button>
-  <button class="btn-tonal"><icon>mouse</icon>Tonal</button>
-  <button class="btn-outlined"><icon>mouse</icon>Outlined</button>
-  <button class="btn-text"><icon>mouse</icon>Text</button>
-  <button class="btn-filled" disabled><icon>mouse</icon>Filled</button>
-  <button class="btn-tonal" disabled><icon>mouse</icon>Tonal</button>
-  <button class="btn-outlined" disabled><icon>mouse</icon>Outlined</button>
-  <button class="btn-text" disabled><icon>mouse</icon>Text</button>
-  <button class="btn-filled">Filled</button>
-  <button class="btn-tonal">Tonal</button>
-  <button class="btn-outlined">Outlined</button>
-  <button class="btn-text">Text</button>
+  <button class="btn-filled" type="button"><icon>mouse</icon>Filled</button>
+  <button class="btn-tonal" type="button"><icon>mouse</icon>Tonal</button>
+  <button class="btn-outlined" type="button"><icon>mouse</icon>Outlined</button>
+  <button class="btn-text" type="button"><icon>mouse</icon>Text</button>
+  <button class="btn-filled" type="button" disabled>
+    <icon>mouse</icon>Filled
+  </button>
+  <button class="btn-tonal" type="button" disabled>
+    <icon>mouse</icon>Tonal
+  </button>
+  <button class="btn-outlined" type="button" disabled>
+    <icon>mouse</icon>Outlined
+  </button>
+  <button class="btn-text" type="button" disabled>
+    <icon>mouse</icon>Text
+  </button>
+  <button class="btn-filled" type="button">Filled</button>
+  <button class="btn-tonal" type="button">Tonal</button>
+  <button class="btn-outlined" type="button">Outlined</button>
+  <button class="btn-text" type="button">Text</button>
 </div>
 <h3 class="font-serif text-xl text-primary">Icon only buttons</h3>
 <div class="flex flex-wrap gap-2">
-  <button class="btn-filled btn-sq">
+  <button class="btn-filled btn-sq" type="button">
     <icon>mouse</icon>
   </button>
-  <button class="btn-tonal btn-sq">
+  <button class="btn-tonal btn-sq" type="button">
     <icon>mouse</icon>
   </button>
-  <button class="btn-outlined btn-sq">
+  <button class="btn-outlined btn-sq" type="button">
     <icon>mouse</icon>
   </button>
-  <button class="btn-text btn-sq">
+  <button class="btn-text btn-sq" type="button">
     <icon>mouse</icon>
   </button>
-  <button class="btn-filled btn-sq" disabled>
+  <button class="btn-filled btn-sq" type="button" disabled>
     <icon>mouse</icon>
   </button>
-  <button class="btn-tonal btn-sq" disabled>
+  <button class="btn-tonal btn-sq" type="button" disabled>
     <icon>mouse</icon>
   </button>
-  <button class="btn-outlined btn-sq" disabled>
+  <button class="btn-outlined btn-sq" type="button" disabled>
     <icon>mouse</icon>
   </button>
-  <button class="btn-text btn-sq" disabled>
+  <button class="btn-text btn-sq" type="button" disabled>
     <icon>mouse</icon>
   </button>
 </div>
 <h3 class="font-serif text-xl text-primary">Floating action buttons (FAB)</h3>
 <div class="flex flex-wrap gap-2">
-  <button class="fab">
+  <button class="fab" type="button">
     <icon>mouse</icon>
   </button>
-  <button class="fab" disabled>
+  <button class="fab" type="button" disabled>
     <icon>mouse</icon>
   </button>
-  <button class="fab"><icon>mouse</icon>Extended FAB</button>
-  <button class="fab" disabled><icon>mouse</icon>Extended FAB</button>
+  <button class="fab" type="button"><icon>mouse</icon>Extended FAB</button>
+  <button class="fab" type="button" disabled>
+    <icon>mouse</icon>Extended FAB
+  </button>
 </div>
 <h3 class="font-serif text-xl text-primary">Radioset</h3>
 <div class="flex flex-wrap gap-2">
@@ -795,7 +805,11 @@ Bananas are fruits. Apples are fruits. Pineapples are fruits. Limes are fruits. 
   </label>
 </div>
 <h2 class="font-serif text-2xl text-primary">Snackbar</h2>
-<button class="btn-tonal" onclick="snackbar.show('All changes saved')">
+<button
+  class="btn-tonal"
+  type="button"
+  onclick="snackbar.show('All changes saved')"
+>
   <icon>icecream</icon>Open Snackbar
 </button>
 <h2 class="font-serif text-2xl text-primary">Status boxes</h2>

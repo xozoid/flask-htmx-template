@@ -8,11 +8,14 @@
     href="{{ url_for('common.page_dashboard') }}"
     hx-get="{{ url_for('common.page_dashboard') }}"
     hx-disabled-elt="this"
+    >Template</a
   >
-    Template
-  </a>
   <section>
-    <button class="btn-text text-on-surface" onclick="nav.openDrawer()">
+    <button
+      class="btn-text text-on-surface"
+      type="button"
+      onclick="nav.openDrawer()"
+    >
       <icon>menu</icon>
     </button>
   </section>
@@ -29,6 +32,7 @@
         </a>
       {% elif link == "DIALOG" %}
         <button
+          type="button"
           hx-get="{{ url_for(endpoint) }}"
           hx-disabled-elt="this"
           hx-target="#dialog"
@@ -40,6 +44,7 @@
         </button>
       {% elif link == "HX_POST" %}
         <button
+          type="button"
           hx-post="{{ url_for(endpoint) }}"
           hx-disabled-elt="this"
           hx-push-url="false"

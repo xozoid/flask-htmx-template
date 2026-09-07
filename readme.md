@@ -62,7 +62,7 @@ flask_htmx_template/
 ### Required
 
 - Python 3.12+
-- Node 18+ (for Prettier formatters only -- not needed at runtime)
+- Node 24+ (for Prettier formatters only -- not needed at runtime)
 - Vale (for prose linting only -- not needed at runtime)
 - Python packages: `sqlalchemy`, `colorama`, `flask`, `flask-assets`, `flask-login`, `argcomplete`, `prometheus-flask-exporter`, `packaging`, `materialyoucolor`, `mcp`, `asgiref`
 
@@ -86,8 +86,8 @@ uv pip install -e .[dev]
 vale sync
 # Install the default pre-commit and commit-msg hook shims
 prek install
-# Prettier formatters for Markdown/Jinja/CSS/JS
-npm install --save-dev prettier prettier-plugin-tailwindcss prettier-plugin-jinja-template @tailwindcss/typography
+# Install the tracked Prettier formatters for Markdown/Jinja/CSS/JS
+npm install
 ```
 
 ---

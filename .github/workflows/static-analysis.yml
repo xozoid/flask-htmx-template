@@ -75,12 +75,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: npm install -D prettier prettier-plugin-tailwindcss prettier-plugin-jinja-template
-      - name: Run prettier
-        uses: creyD/prettier_action@v4.6
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
         with:
-          dry: true
-          prettier_plugins: "prettier-plugin-tailwindcss prettier-plugin-jinja-template"
+          node-version: "24"
+      - name: Cache Prettier and plugins
+        id: npm-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-24-${{ hashFiles('package-lock.json') }}
+      - name: Install Prettier and plugins
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+      - name: Run prettier
+        run: npx prettier --check .
   imports:
     runs-on: ubuntu-latest
     strategy:

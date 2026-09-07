@@ -60,7 +60,7 @@ repos:
         additional_dependencies:
           - tomli
   - repo: https://github.com/Riverside-Healthcare/djLint
-    rev: v1.44.2
+    rev: v1.46.0
     hooks:
       - id: djlint-jinja
   - repo: https://github.com/ComPWA/taplo-pre-commit

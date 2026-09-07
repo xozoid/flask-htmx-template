@@ -17,6 +17,20 @@ application template.
 - Activate `.venv` from the repository root before changing into a
   subdirectory. Don't use parent-directory paths in commands.
 
+## Agent skills
+
+Load `.agents/skills/project-overview/SKILL.md` at the start of every task.
+Load the additional skill that matches the files being changed:
+
+| Task                                                                   | Skill           |
+| ---------------------------------------------------------------------- | --------------- |
+| Flask routes, handlers, JSON API, or HTMX behavior                     | `controllers`   |
+| SQLAlchemy models, queries, migrations, or database helpers            | `models`        |
+| Jinja templates, CSS, or browser-side JavaScript                       | `templates`     |
+| Pytest tests or fixtures                                               | `tests`         |
+| Docker image definitions, entrypoints, gunicorn, or runtime deployment | `deploy`        |
+| Prose, documentation, comments, docstrings, or source text             | `writing-style` |
+
 ## Git
 
 A developer may have edited files created in an earlier session. Their version

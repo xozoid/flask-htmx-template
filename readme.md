@@ -18,8 +18,8 @@ A production-ready Flask + HTMX template for building modern web applications wi
 | **HTMX patterns**     | Dialog system, snackbar notifications, partial page swaps, nav components       |
 | **JSON API**          | Type-validated JSON endpoints with full error reporting                         |
 | **MCP server**        | Authenticated Streamable HTTP endpoint with typed tool registration             |
-| **CLI**               | `create`, `migrate`, `backup`, `restore`, `unlock`, `change-password`, `clean`  |
-| **Metrics**           | Prometheus exporter on a separate port                                          |
+| **CLI**               | `create`, `migrate`, `unlock`, and `change-password`                            |
+| **Metrics**           | Prometheus metrics for the web application                                      |
 | **Asset pipeline**    | Tailwind CSS v4, JS minification, automatic rebuild on package install          |
 | **Testing**           | 100% coverage enforced, migration tests                                         |
 | **Docker**            | Multi-stage build, non-root user, configurable via environment variables        |
@@ -57,20 +57,9 @@ flask_htmx_template/
 
 ---
 
-## Environment
+## Start a new application
 
-### Required
-
-- Python 3.12+
-- Node 24+ (for Prettier formatters only -- not needed at runtime)
-- Vale (for prose linting only -- not needed at runtime)
-- Python packages: `sqlalchemy`, `colorama`, `flask`, `flask-assets`, `flask-login`, `argcomplete`, `prometheus-flask-exporter`, `packaging`, `materialyoucolor`, `mcp`, `asgiref`
-
----
-
-## Installation / Build / Deployment
-
-Install module
+For a production installation:
 
 ```bash
 python -m pip install .
@@ -78,21 +67,10 @@ python -m pip install .
 activate-global-python-argcomplete
 ```
 
-For development (editable install + pre-commit hooks)
+For local development, testing, Docker, PostgreSQL deployment, and code-style
+commands, see [the development guide](dev.md).
 
-```bash
-uv pip install -e .[dev]
-# Download the prose-linting styles declared in .vale.ini
-vale sync
-# Install the default pre-commit and commit-msg hook shims
-prek install
-# Install the tracked Prettier formatters for Markdown/Jinja/CSS/JS
-npm install
-```
-
----
-
-## Usage
+## Run locally
 
 ```bash
 # Create a new database
@@ -150,174 +128,6 @@ python tools/mcp_connect.py list-resources
 python tools/mcp_connect.py read-resource flask-htmx-template://metadata/server
 python tools/mcp_connect.py read-resource flask-htmx-template://metadata/capabilities
 python tools/mcp_connect.py call get_items
-```
-
----
-
-## Docker
-
-```bash
-docker run \
-  --name flask_htmx_template \
-  --detach \
-  --publish 8000:8000 \
-  --publish 8001:8001 \
-  --volume flask_htmx_template-data:/data \
-  flask_htmx_template
-```
-
-### Configuration
-
-| Env                | Default             | Description                                   |
-| ------------------ | ------------------- | --------------------------------------------- |
-| `DB_PATH`          | `/data/database.db` | SQLite path or PostgreSQL URL                 |
-| `DB_WEB_KEY`       | `web-admin`         | Web password set when creating a new database |
-| `WEB_PORT`         | `8000`              | Port to bind server to                        |
-| `WEB_PORT_METRICS` | `8001`              | Port to bind metrics server to                |
-| `WEB_CONCURRENCY`  | n(CPU) × 2 + 1      | Number of gunicorn workers                    |
-| `WEB_N_THREADS`    | `1`                 | Threads per worker                            |
-| `WEB_TIMEOUT`      | `30`                | Worker silent timeout (seconds)               |
-
-### Database Query Time Limits
-
-Use `sql.time_limit()` inside an active SQLAlchemy session to bound a specific
-query or group of queries:
-
-```python
-from sqlalchemy import text
-
-from flask_htmx_template import sql
-
-with database.begin_session() as session:
-    with sql.time_limit(session, timeout_ms=2_000):
-        result = session.execute(text("SELECT 1")).scalar_one()
-```
-
-Timeouts must be positive integers in milliseconds. SQLite limits are
-approximate because they're checked between virtual-machine instruction
-batches. PostgreSQL applies the limit to each statement in the context. A
-PostgreSQL cancellation can leave the transaction aborted, so callers that
-catch `TimeoutError` may need to roll it back. Unsupported database drivers
-raise `TypeError`.
-
----
-
-## PostgreSQL Deployment
-
-PostgreSQL is supported as an alternative to SQLite. Connections always use TLS (`sslmode=require`).
-`DB_PATH` accepts `postgres://` and `postgresql://` URLs, including optional
-SQLAlchemy driver suffixes such as `postgresql+psycopg://`.
-
-### 1. Generate a Self-Signed Certificate
-
-```bash
-mkdir -p certs
-
-openssl req -new -x509 -days 3650 -nodes \
-  -out certs/server.crt \
-  -keyout certs/server.key \
-  -subj "/CN=postgres"
-
-# The official postgres Docker image runs as UID/GID 999.
-# The key file must be owned by that user or postgres will refuse to start.
-sudo chown 999:999 certs/server.crt certs/server.key
-chmod 600 certs/server.key
-```
-
-### 2. Create a Password Secret
-
-```bash
-mkdir -p secrets
-python3 -c "import secrets; print(secrets.token_hex())" > secrets/db_password.txt
-```
-
-### 3. docker-compose.yml
-
-```yaml
-services:
-  postgres:
-    image: postgres:16
-    environment:
-      POSTGRES_USER: appuser
-      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
-      POSTGRES_DB: appdb
-    secrets:
-      - db_password
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./certs/server.crt:/var/lib/postgresql/server.crt:ro
-      - ./certs/server.key:/var/lib/postgresql/server.key:ro
-    command: >
-      postgres
-        -c ssl=on
-        -c ssl_cert_file=/var/lib/postgresql/server.crt
-        -c ssl_key_file=/var/lib/postgresql/server.key
-    restart: unless-stopped
-
-  app:
-    image: flask_htmx_template
-    depends_on:
-      - postgres
-    environment:
-      DB_PATH: postgresql://appuser:password@postgres:5432/appdb
-      DB_WEB_KEY: web-admin
-    secrets:
-      - db_password
-    ports:
-      - "8000:8000"
-      - "8001:8001"
-    restart: unless-stopped
-
-secrets:
-  db_password:
-    file: ./secrets/db_password.txt
-
-volumes:
-  postgres-data:
-```
-
-The app uses `sslmode=require` by default so no extra configuration is needed on the app side. The schema is created automatically on first start; subsequent starts skip creation and run migrations only.
-
----
-
-## Running Tests
-
-```bash
-# All tests
-python -m pytest
-
-# Coverage report (must reach 100%)
-python -m coverage run && python -m coverage report
-```
-
-Tests don't cover front-end behavior or browser interaction.
-
----
-
-## Development
-
-Code style follows the [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html).
-
-### Linters
-
-- `ruff` -- Python (all rules enabled)
-- `basedpyright` -- strict type checking
-- `djlint` -- Jinja templates
-- `codespell` -- spell checking
-- `vale` -- Markdown, reStructuredText, AsciiDoc, and plain text
-
-### Formatters
-
-- `black` + `isort` -- Python
-- `prettier` -- Markdown, Jinja, CSS, JS
-- `taplo` -- TOML
-
-### Tools
-
-```bash
-./tools/formatters.sh      # Run all formatters
-./tools/linters.sh         # Run all linters
-./tools/run_tailwindcss.sh # Watch and rebuild Tailwind CSS
 ```
 
 ---

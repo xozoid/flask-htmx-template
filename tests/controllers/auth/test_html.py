@@ -115,6 +115,10 @@ def test_bearer_token(web_client: WebClient, flask_app: flask.Flask) -> None:
         token = Config.fetch(ConfigKey.API_BEARER_TOKEN)
     flask_app.testing = False
     try:
+        login, _ = web_client.POST_J(
+            "auth.json_login",
+            headers={"Authorization": f"Bearer {token}", "HX-Request": "true"},
+        )
         result, _ = web_client.GET(
             "common.page_dashboard",
             headers={"Authorization": f"Bearer {token}", "HX-Request": "true"},
@@ -122,6 +126,7 @@ def test_bearer_token(web_client: WebClient, flask_app: flask.Flask) -> None:
     finally:
         flask_app.testing = True
 
+    assert login == {"username": "api", "items_read": True, "items_write": True}
     assert "Dashboard" in result
 
 
@@ -157,3 +162,26 @@ def test_json_requires_bearer(
 
     assert result == {"errors": ["Bearer token required"]}
     assert headers["WWW-Authenticate"] == "Bearer"
+
+
+def test_debug_user_permissions_survive_session_reloading(
+    web_client: WebClient,
+    flask_app: flask.Flask,
+) -> None:
+    web_client.POST(
+        "auth.debug_login",
+        data={"username": "web", "roles": "items_read"},
+    )
+    flask_app.testing = False
+    try:
+        result, _ = web_client.GET_J("items.json_all")
+        denied, _ = web_client.POST_J(
+            "items.json_new",
+            json={"name": "Blocked", "date": "2026-01-01", "value": 1},
+            rc=base.HTTP_CODE_UNAUTHORIZED,
+        )
+    finally:
+        flask_app.testing = True
+
+    assert result == {"count": 0, "items": [], "next_offset": None, "total": 0}
+    assert denied == {"errors": ["User does not have permission for this operation"]}

@@ -11,6 +11,7 @@ import flask
 from flask_htmx_template import exceptions as exc
 from flask_htmx_template import sql, web
 from flask_htmx_template.controllers import base, json_api
+from flask_htmx_template.controllers.auth import ctx as auth_ctx
 from flask_htmx_template.controllers.items import ctx
 from flask_htmx_template.models.item import Item
 
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
     import werkzeug
 
 
+@auth_ctx.item_read_required
 def page_all() -> flask.Response:
     """GET all items page.
 
@@ -56,6 +58,7 @@ def page_all() -> flask.Response:
         )
 
 
+@auth_ctx.item_read_required
 def page(uri: str) -> flask.Response:
     """GET item page.
 
@@ -68,6 +71,7 @@ def page(uri: str) -> flask.Response:
         return base.page("items/page.jinja", title=item.name, item=ctx.item(item))
 
 
+@auth_ctx.item_write_required
 def new() -> str | flask.Response:
     """GET and POST new item dialog.
 
@@ -100,6 +104,7 @@ def new() -> str | flask.Response:
         return base.dialog_swap(event="item", snackbar="All changes saved")
 
 
+@auth_ctx.item_write_required
 def item(uri: str) -> str | werkzeug.Response:
     """GET, PUT, and DELETE item edit dialog.
 
@@ -128,6 +133,7 @@ def item(uri: str) -> str | werkzeug.Response:
         return base.dialog_swap(event="item", snackbar="All changes saved")
 
 
+@auth_ctx.item_read_required
 def validation() -> str:
     """GET item UI validation.
 

@@ -8,21 +8,21 @@ A production-ready Flask + HTMX template for building modern web applications wi
 
 ## What's Included
 
-| Feature               | Details                                                                         |
-| --------------------- | ------------------------------------------------------------------------------- |
-| **Authentication**    | Password/session authentication, debug login, and database-backed bearer tokens |
-| **Database**          | SQLAlchemy 2 with active-record helpers, PostgreSQL support                     |
-| **Migrations**        | Versioned schema migrations with automatic detection on startup                 |
-| **Material Design 3** | Icons, dynamic color palettes from a single swatch color + mood selector        |
-| **Theme editor**      | Live-preview dialog with hue slider and mood picker, saved to cookies           |
-| **HTMX patterns**     | Dialog system, snackbar notifications, partial page swaps, nav components       |
-| **JSON API**          | Type-validated JSON endpoints with full error reporting                         |
-| **MCP server**        | Authenticated Streamable HTTP endpoint with typed tool registration             |
-| **CLI**               | `create`, `migrate`, `unlock`, and `change-password`                            |
-| **Metrics**           | Prometheus metrics for the web application                                      |
-| **Asset pipeline**    | Tailwind CSS v4, JS minification, automatic rebuild on package install          |
-| **Testing**           | 100% coverage enforced, migration tests                                         |
-| **Docker**            | Multi-stage build, non-root user, configurable via environment variables        |
+| Feature               | Details                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- |
+| **Authentication**    | Password/session authentication, debug roles, and opaque or JWT bearer tokens |
+| **Database**          | SQLAlchemy 2 with active-record helpers, PostgreSQL support                   |
+| **Migrations**        | Versioned schema migrations with automatic detection on startup               |
+| **Material Design 3** | Icons, dynamic color palettes from a single swatch color + mood selector      |
+| **Theme editor**      | Live-preview dialog with hue slider and mood picker, saved to cookies         |
+| **HTMX patterns**     | Dialog system, snackbar notifications, partial page swaps, nav components     |
+| **JSON API**          | Type-validated JSON endpoints with full error reporting                       |
+| **MCP server**        | Authenticated Streamable HTTP endpoint with typed tool registration           |
+| **CLI**               | `create`, `migrate`, `unlock`, and `change-password`                          |
+| **Metrics**           | Prometheus metrics for the web application                                    |
+| **Asset pipeline**    | Tailwind CSS v4, JS minification, automatic rebuild on package install        |
+| **Testing**           | 100% coverage enforced, migration tests                                       |
+| **Docker**            | Multi-stage build, non-root user, configurable via environment variables      |
 
 ---
 
@@ -88,6 +88,19 @@ uvicorn --factory flask_htmx_template.asgi:create_app --host 127.0.0.1 --port 50
 New databases receive an opaque API token in `ConfigKey.API_BEARER_TOKEN`. Send it
 as `Authorization: Bearer <token>` to authenticate API requests. The token is stored
 only in the database and isn't issued or validated by an external identity provider.
+
+Microsoft Entra ID JWT authentication is enabled when both `AUTH_AUTHORITY` and
+`AUTH_AUDIENCE` are configured. The provider's OpenID discovery document is read
+from `<authority>/v2.0/.well-known/openid-configuration`; signing keys are cached
+for five minutes. Set `AUTH_SCOPE`, `AUTH_ROLE_READ`, and `AUTH_ROLE_WRITE` to
+override the defaults `Api.Connect`, `Items.Read.All`, and `Items.Write.All`.
+When the audience is unset, JWT authentication is disabled and the database token
+continues to work. Before using either type of bearer token on other JSON API
+endpoints, clients must `POST /j/auth/login` with the token in the Authorization
+header to provision the user. Delegated tokens need the configured scope and read
+role; application tokens use `azp` or `appid` and need the read role. Debug login
+creates or updates a database user from the selected username and item-role
+checkboxes.
 
 ### Model Context Protocol
 

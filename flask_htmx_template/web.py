@@ -25,10 +25,13 @@ from flask_htmx_template.controllers import base
 from flask_htmx_template.controllers.api_docs import ctx as api_docs_ctx
 from flask_htmx_template.controllers.api_docs import html as api_docs_html
 from flask_htmx_template.controllers.api_docs import json as api_docs_json
+from flask_htmx_template.controllers.auth import base as auth_base
 from flask_htmx_template.controllers.auth import bearer as auth_bearer
 from flask_htmx_template.controllers.auth import ctx as auth_ctx
 from flask_htmx_template.controllers.auth import debug as auth_debug
 from flask_htmx_template.controllers.auth import html as auth_html
+from flask_htmx_template.controllers.auth import json as auth_json
+from flask_htmx_template.controllers.auth import top as auth_top
 from flask_htmx_template.controllers.common import html as common_html
 from flask_htmx_template.controllers.items import html as items_html
 from flask_htmx_template.controllers.items import json as items_json
@@ -133,6 +136,7 @@ class FlaskExtension:
             api_docs_html,
             api_docs_json,
             auth_html,
+            auth_json,
             auth_debug,
             common_html,
             items_html,
@@ -169,10 +173,15 @@ class FlaskExtension:
         app.after_request(base.change_redirect_to_htmx)
         app.after_request(base.append_json_newline)
 
+        auth_top.setup(app)
         login_manager = flask_login.LoginManager()
         login_manager.init_app(app)
-        login_manager.user_loader(auth_ctx.get_user)
-        login_manager.request_loader(auth_bearer.load_user)
+        login_manager.user_loader(auth_base.get_user)
+        bearer_provider = auth_top.provider(app, auth_bearer.BearerAuth)
+        if not isinstance(bearer_provider, auth_bearer.BearerAuth):  # pragma: no cover
+            msg = "Bearer authentication provider has the wrong type"
+            raise TypeError(msg)
+        login_manager.request_loader(bearer_provider.load_user)
         login_manager.login_view = "auth.page_login"
 
         app.before_request(auth_ctx.default_login_required)

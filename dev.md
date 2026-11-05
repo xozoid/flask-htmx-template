@@ -139,6 +139,8 @@ database credentials, certificates, or private keys to this repository.
 GitHub Actions runs unit tests on Python 3.12 and 3.13. Static analysis uses
 Python 3.13, and web formatting uses Node 24. Keep `package-lock.json` in sync
 with `package.json` so CI uses the same Prettier build as local development.
+Python CI jobs use `uv sync --locked` and run tools through `uv run`, so update
+`uv.lock` whenever Python dependencies change.
 
 ## Language guidelines
 

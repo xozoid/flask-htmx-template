@@ -19,17 +19,15 @@ jobs:
         python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install ruff
+        run: uv sync --locked --extra dev
       - name: Run ruff
-        run: |
-          ruff check .
+        run: uv run ruff check .
   linting-pyright:
     runs-on: ubuntu-latest
     strategy:
@@ -38,20 +36,15 @@ jobs:
         python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
+          enable-cache: true
       - name: Install dependencies
-        run: |
-          # pyright needs the dependencies installed
-          sudo apt-get install -y libsqlcipher-dev || (sudo apt-get update && sudo apt-get install -y libsqlcipher-dev)
-          python -m pip install --upgrade pip
-          python -m pip install -e .[dev,encrypt]
+        run: uv sync --locked --extra dev
       - name: Run basedpyright
-        run: |
-          basedpyright
+        run: uv run basedpyright
   formatting:
     runs-on: ubuntu-latest
     strategy:
@@ -60,17 +53,15 @@ jobs:
         python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install black
+        run: uv sync --locked --extra dev
       - name: Run black
-        run: |
-          black . --check
+        run: uv run black . --check
   formatting-web:
     runs-on: ubuntu-latest
     steps:
@@ -98,17 +89,15 @@ jobs:
         python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install isort
+        run: uv sync --locked --extra dev
       - name: Run isort
-        run: |
-          isort . --check
+        run: uv run isort . --check
   spelling:
     runs-on: ubuntu-latest
     strategy:
@@ -117,17 +106,15 @@ jobs:
         python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install codespell tomli
+        run: uv sync --locked --extra dev
       - name: Run codespell
-        run: |
-          codespell .
+        run: uv run codespell .
   linting-jinja:
     runs-on: ubuntu-latest
     strategy:
@@ -136,14 +123,12 @@ jobs:
         python-version: ["3.13"]
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install djlint
+        run: uv sync --locked --extra dev
       - name: Run djlint
-        run: |
-          djlint .
+        run: uv run djlint .

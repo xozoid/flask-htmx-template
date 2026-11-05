@@ -29,8 +29,10 @@ dependencies = [
   "materialyoucolor>=3.0.2",
   "mcp>=2,<3",
   "packaging",
+  "PyJWT[crypto]>=2.8",
   "prometheus-flask-exporter",
   "pydantic>=2",
+  "requests>=2.31",
   "sqlalchemy>=2,!=2.0.50",    # 2.0.50 has an accidental debug print in pysqlcipher dialect; remove when 2.0.51 ships (sqlalchemy/sqlalchemy#13349)
   "tqdm",
 ]

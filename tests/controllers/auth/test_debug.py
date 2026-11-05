@@ -46,6 +46,7 @@ def test_debug_login_redirects_when_debug_is_enabled(
     with flask_app.test_request_context(path, method="POST", data=form):
         response = debug.debug_login()
 
+    assert not isinstance(response, str)
     assert response.status_code == 302
     assert response.location == target
     assert logged_in

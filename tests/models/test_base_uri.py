@@ -12,6 +12,7 @@ from flask_htmx_template.models.base import Base
 from flask_htmx_template.models.base_uri import Cipher
 from flask_htmx_template.models.config import Config
 from flask_htmx_template.models.item import Item
+from flask_htmx_template.models.user import User
 
 MODELS_URI: list[type[Base]] = [
     Item,
@@ -20,6 +21,7 @@ MODELS_URI: list[type[Base]] = [
 MODELS_NONE: list[type[Base]] = [
     AppliedMigration,
     Config,
+    User,
 ]
 
 

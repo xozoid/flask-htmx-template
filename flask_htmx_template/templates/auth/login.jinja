@@ -52,7 +52,7 @@
         </form>
         {% if debug %}
           <form
-            class="mx-2 flex w-full max-w-96 justify-center"
+            class="mx-2 flex w-full max-w-96 flex-col items-center gap-2"
             hx-post="{{ url_for('auth.debug_login') }}"
             hx-disabled-elt="find button"
             hx-target="#login-error"
@@ -61,6 +61,20 @@
             {% if next_url %}
               <input name="next" type="hidden" value="{{ next_url }}" />
             {% endif %}
+            <label
+              class="input-outlined w-full input-bg-surface-container-high"
+            >
+              <input name="username" required type="text" value="debug" />
+              <div><div>Username</div></div>
+            </label>
+            <label>
+              <input name="roles" type="checkbox" value="items_read" checked />
+              Item read
+            </label>
+            <label>
+              <input name="roles" type="checkbox" value="items_write" checked />
+              Item write
+            </label>
             <button class="btn-tonal" type="submit">
               Debug login
               <icon>bug_report</icon>

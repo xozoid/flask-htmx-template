@@ -60,6 +60,14 @@ New databases receive an opaque API token stored as
 header for JSON API and MCP requests. The Flask development server exposes the
 HTML and JSON application only; start the ASGI server to expose `/mcp`.
 
+The JSON API also accepts Microsoft Entra ID JWTs when `AUTH_AUTHORITY` and
+`AUTH_AUDIENCE` are set. Discovery uses the authority's v2.0 OpenID metadata.
+Optional `AUTH_SCOPE`, `AUTH_ROLE_READ`, and `AUTH_ROLE_WRITE` settings select the
+required delegated scope and read/write claims. If the audience is unset, JWT
+authentication is disabled; the database bearer token remains available. Clients
+must first `POST /j/auth/login` with either bearer token to provision the user
+before calling other JSON API endpoints.
+
 Use `tools/mcp_connect.py` to inspect a running MCP server. Set `BEARER_TOKEN`
 in the environment rather than placing the token in a command line.
 

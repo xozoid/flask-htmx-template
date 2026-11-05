@@ -9,10 +9,12 @@ import flask
 from flask_htmx_template import exceptions as exc
 from flask_htmx_template import web
 from flask_htmx_template.controllers import base, json_api
+from flask_htmx_template.controllers.auth import ctx as auth_ctx
 from flask_htmx_template.controllers.items import ctx
 from flask_htmx_template.models.item import Item
 
 
+@auth_ctx.item_read_required
 def json_all() -> ctx.ItemsContext | base.JSONResponse:
     """GET all items.
 
@@ -31,6 +33,7 @@ def json_all() -> ctx.ItemsContext | base.JSONResponse:
         )
 
 
+@auth_ctx.item_write_required
 def json_new() -> ctx.ItemContext | base.JSONResponse:
     """POST new item.
 
@@ -125,6 +128,7 @@ def json_delete(uri: str) -> ctx.ItemContext | base.JSONResponse:
         return deleted
 
 
+@auth_ctx.item_write_required
 def json(uri: str) -> ctx.ItemContext | base.JSONResponse:
     """GET, PUT, or DELETE an item by URI.
 

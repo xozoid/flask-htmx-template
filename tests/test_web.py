@@ -30,7 +30,7 @@ def test_create_app(empty_database: SQLiteDatabase, flask_app: flask.Flask) -> N
     with empty_database.begin_session():
         secret_key = Config.fetch(ConfigKey.SECRET_KEY)
     assert flask_app.secret_key == secret_key
-    assert len(flask_app.before_request_funcs[None]) == 2
+    assert len(flask_app.before_request_funcs[None]) == 3
 
     assert isinstance(web.db, SQLiteDatabase)
     assert web.db.path == empty_database.path
@@ -43,7 +43,58 @@ def test_create_app_env(
     monkeypatch.setenv("DB_PATH", str(empty_database.path))
 
     app = web.create_app()
-    assert len(app.before_request_funcs[None]) == 2
+    assert len(app.before_request_funcs[None]) == 3
+
+
+@pytest.mark.parametrize(
+    ("proxyfix", "expected"),
+    [
+        (None, "127.0.0.1|http"),
+        ("1", "203.0.113.10|https"),
+    ],
+)
+def test_create_app_proxyfix(
+    monkeypatch: pytest.MonkeyPatch,
+    empty_database: SQLiteDatabase,
+    proxyfix: str | None,
+    expected: str,
+) -> None:
+    monkeypatch.setenv("DB_PATH", str(empty_database.path))
+    if proxyfix is None:
+        monkeypatch.delenv("FLASK_HTMX_TEMPLATE_PROXYFIX", raising=False)
+    else:
+        monkeypatch.setenv("FLASK_HTMX_TEMPLATE_PROXYFIX", proxyfix)
+
+    app = web.create_app()
+    app.testing = True
+    app.add_url_rule(
+        "/proxy-check",
+        endpoint="proxy_check",
+        view_func=lambda: f"{flask.request.remote_addr}|{flask.request.scheme}",
+    )
+
+    response = app.test_client().get(
+        "/proxy-check",
+        headers={
+            "X-Forwarded-For": "203.0.113.10",
+            "X-Forwarded-Proto": "https",
+        },
+    )
+
+    assert response.get_data(as_text=True) == expected
+
+
+def test_metrics_endpoint_is_public(
+    monkeypatch: pytest.MonkeyPatch,
+    empty_database: SQLiteDatabase,
+) -> None:
+    monkeypatch.setenv("DB_PATH", str(empty_database.path))
+
+    app = web.create_app()
+    response = app.test_client().get("/metrics")
+
+    assert response.status_code == base.HTTP_CODE_OK
+    assert b"flask_http_request_duration_seconds" in response.data
 
 
 def test_no_secret_key(

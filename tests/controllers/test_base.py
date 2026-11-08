@@ -7,12 +7,15 @@ from pathlib import Path
 from typing import TYPE_CHECKING, TypedDict
 
 import flask
+import flask_login
 import pytest
+from werkzeug.routing import Rule
 
 import flask_htmx_template
 from flask_htmx_template import exceptions as exc
-from flask_htmx_template import utils
+from flask_htmx_template import utils, web
 from flask_htmx_template.controllers import base
+from flask_htmx_template.controllers.auth import base as auth_base
 from flask_htmx_template.models.item import Item
 from flask_htmx_template.version import __version__
 from tests import conftest
@@ -486,6 +489,61 @@ def test_metrics(web_client: WebClient, item: Item) -> None:
     assert "flask_http_request_duration_seconds_count" in result_str
     assert 'endpoint="items.page"' in result_str
     assert 'endpoint="items.page_all"' in result_str
+
+
+def test_authenticated_page_metrics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = flask.Flask(__name__)
+    web.FlaskExtension._init_metrics(app)
+    registry = app.extensions["flask_htmx_template_metrics"].registry
+    metrics_callback = next(
+        callback
+        for callback in app.before_request_funcs[None]
+        if callback.__name__ == "inc_page_counter"
+    )
+
+    def record_request(endpoint: str) -> None:
+        """Invoke the metrics callback with a chosen endpoint."""
+        with app.test_request_context():
+            flask.request.url_rule = Rule(flask.request.path, endpoint=endpoint)
+            metrics_callback()
+
+    monkeypatch.setattr(flask_login, "current_user", flask_login.AnonymousUserMixin())
+    record_request("common.page_dashboard")
+
+    assert registry.get_sample_value("flask_http_user_request_total") == 0
+    assert (
+        registry.get_sample_value(
+            "flask_http_page_request_total",
+            {"endpoint": "common.page_dashboard"},
+        )
+        is None
+    )
+
+    monkeypatch.setattr(flask_login, "current_user", auth_base.WebUser.system())
+    record_request("common.page_dashboard")
+
+    assert registry.get_sample_value("flask_http_user_request_total") == 1
+    assert (
+        registry.get_sample_value(
+            "flask_http_page_request_total",
+            {"endpoint": "common.page_dashboard"},
+        )
+        == 1
+    )
+
+    record_request("common.status_page")
+    record_request("common.internal")
+
+    assert registry.get_sample_value("flask_http_user_request_total") == 1
+    assert (
+        registry.get_sample_value(
+            "flask_http_page_request_total",
+            {"endpoint": "common.page_dashboard"},
+        )
+        == 1
+    )
 
 
 def _visit_all_links(

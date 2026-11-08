@@ -17,6 +17,7 @@ import prometheus_client
 import prometheus_flask_exporter
 import prometheus_flask_exporter.multiprocess
 from werkzeug.exceptions import HTTPException
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flask_htmx_template import controllers
 from flask_htmx_template import exceptions as exc
@@ -231,6 +232,31 @@ class FlaskExtension:
             "flask-htmx-template info",
             version=__version__,
         )
+
+        user_counter = prometheus_client.Counter(
+            "flask_http_user_request",
+            "Total number of authenticated page requests",
+            registry=metrics.registry,
+        )
+        page_counter = prometheus_client.Counter(
+            "flask_http_page_request",
+            "Total number of authenticated page requests by endpoint",
+            ("endpoint",),
+            registry=metrics.registry,
+        )
+
+        def inc_page_counter() -> None:
+            endpoint = flask.request.endpoint or ""
+            # NOTE: Page and status detection follows the endpoint naming
+            # convention.
+            if "page" not in endpoint or "status" in endpoint:
+                return
+            if not isinstance(flask_login.current_user, auth_base.WebUser):
+                return
+            user_counter.inc()
+            page_counter.labels(endpoint).inc()
+
+        app.before_request(inc_page_counter)
         app.extensions["flask_htmx_template_metrics"] = metrics
 
     def url_for(
@@ -292,6 +318,8 @@ def create_app() -> flask.Flask:
 
     """
     app = flask.Flask(__name__)
+    if os.getenv("FLASK_HTMX_TEMPLATE_PROXYFIX") == "1":
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
     logging.getLogger("werkzeug").setLevel(
         logging.DEBUG if app.debug else logging.WARNING,

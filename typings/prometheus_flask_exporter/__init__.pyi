@@ -14,6 +14,8 @@ GroupBy = Literal["path", "endpoint", "url_rule"]
 Responder = Callable[..., ResponseReturnValue | object | HTTPException | flask.Response]
 
 class PrometheusMetrics:
+    registry: prometheus_client.CollectorRegistry
+
     def __init__[T: Callable[..., object]](
         self,
         app: flask.Flask,

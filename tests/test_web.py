@@ -198,12 +198,14 @@ def test_flask_context(flask_app: flask.Flask, utc: datetime.datetime) -> None:
     [
         (Decimal("1000.100000"), "comma", "1,000.10"),
         (Decimal("1000.100000"), "qty", "1,000.100000"),
+        (Decimal("1000.1"), "price", "$1,000.100"),
         (Decimal("1000.100000"), "input_value", "1000.1"),
         (Decimal("1000.000000"), "input_value", "1000"),
         (Decimal(), "input_value", ""),
         (14, "days", "2 weeks"),
         (14, "days_abv", "2 wks"),
-        (Decimal("0.1234"), "percent", "12.34%"),
+        (Decimal("0.1234"), "percent", "12.34 %"),
+        (Decimal("0.000001"), "percent", "1 ppm"),
         (
             {
                 "dict": {"k": (1, 2)},

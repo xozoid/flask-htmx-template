@@ -10,7 +10,6 @@ import logging
 import operator as op
 import pathlib
 import re
-import shutil
 import sys
 import unicodedata
 from decimal import Decimal, InvalidOperation
@@ -55,23 +54,10 @@ MIN_STR_LEN = 2
 SEARCH_THRESHOLD = 60
 DUPLICATE_THRESHOLD = 80
 
-THRESHOLD_MONTHS = 12 * 1.5
-THRESHOLD_WEEKS = 4 * 2
-THRESHOLD_DAYS = 7 * 1.5
-
-MONTHS_IN_YEAR = 12
 DAYS_IN_YEAR = Decimal("365.25")
 DAYS_IN_WEEK = 7
-
 DAYS_IN_QUARTER = int(DAYS_IN_YEAR // 4)
-
-THRESHOLD_HOURS = 96
-THRESHOLD_MINUTES = 90
-THRESHOLD_SECONDS = 90
-
-SECONDS_IN_MINUTE = 60
-SECONDS_IN_HOUR = 60 * SECONDS_IN_MINUTE
-SECONDS_IN_DAY = 24 * SECONDS_IN_HOUR
+MONTHS_IN_YEAR = 12
 
 MATCH_PERCENT = Decimal("0.05")
 MATCH_ABSOLUTE = Decimal(10)
@@ -209,12 +195,12 @@ def _eval_node(node: ast.expr) -> Decimal:
     raise exc.EvaluationError(msg)
 
 
-def evaluate_real_statement(s: str | None, precision: int = 2) -> Decimal | None:
+def evaluate_real_statement(s: str | None, precision: int | None = 2) -> Decimal | None:
     """Evaluate statement, using Decimal for numbers.
 
     Args:
         s: Arithmetic statement whose literals may include currency formatting
-        precision: Number of digits to round number to
+        precision: Number of digits to round number to, or None to preserve it
 
     Returns:
         Evaluated statement
@@ -229,69 +215,7 @@ def evaluate_real_statement(s: str | None, precision: int = 2) -> Decimal | None
         value = _eval_node(ast.parse(s, mode="eval").body)
     except (exc.EvaluationError, SyntaxError, TypeError):
         return None
-    return round(value, precision)
-
-
-def format_days(days: int, labels: list[str] | None = None) -> str:
-    """Format number of days to days, weeks, months, or years.
-
-    Args:
-        days: Number of days to format
-        labels: Override labels [days, weeks, months, years]
-
-    Returns:
-        x days
-        x weeks
-        x months
-        x years
-
-    """
-    labels = labels or ["days", "weeks", "months", "years"]
-    years = days / DAYS_IN_YEAR
-    months = years * MONTHS_IN_YEAR
-    if months > THRESHOLD_MONTHS:
-        return f"{years:.0f} {labels[3]}"
-    weeks = days / DAYS_IN_WEEK
-    if weeks > THRESHOLD_WEEKS:
-        return f"{months:.0f} {labels[2]}"
-    if days > THRESHOLD_DAYS:
-        return f"{weeks:.0f} {labels[1]}"
-    return f"{days} {labels[0]}"
-
-
-def format_seconds(
-    seconds: float,
-    labels: list[str] | None = None,
-    labels_days: list[str] | None = None,
-) -> str:
-    """Format number of seconds to seconds, minutes, or hours.
-
-    Args:
-        seconds: Number of seconds to format
-        labels: Override labels [seconds, minutes, hours]
-        labels_days: Override day labels, passed to format_days
-
-    Returns:
-        x seconds
-        x minutes
-        x hours
-        x days
-        x weeks
-        x months
-        x years
-
-    """
-    labels = labels or ["seconds", "minutes", "hours"]
-    hours = seconds / SECONDS_IN_HOUR
-    if hours > THRESHOLD_HOURS:
-        days = int(seconds // SECONDS_IN_DAY)
-        return format_days(days, labels=labels_days)
-    minutes = seconds / SECONDS_IN_MINUTE
-    if minutes > THRESHOLD_MINUTES:
-        return f"{hours:.1f} {labels[2]}"
-    if seconds > THRESHOLD_SECONDS:
-        return f"{minutes:.1f} {labels[1]}"
-    return f"{seconds:.1f} {labels[0]}"
+    return value if precision is None else round(value, precision)
 
 
 def range_date(
@@ -603,110 +527,6 @@ def interpolate_linear(values: list[tuple[int, Decimal]], n: int) -> list[Decima
         slope_i += 1
 
     return result
-
-
-def pretty_table(table: list[list[str] | None]) -> list[str]:
-    """Pretty print tabular data.
-
-    First row is header, able to configure how columns behave
-    "<Header" will left align text, default
-    ">Header" will right align text
-    "^Header" will center align text
-    "Header." will prioritize this column for truncation with ellipsis if too long
-    "Header/" will prevent this column being truncated
-
-    Args:
-        table: List of table rows, None will print a horizontal line
-
-    Returns:
-        list of lines to print
-
-    Raises:
-        InvalidTableError: If table has no rows or the first row is None
-
-    """
-    if len(table) < 1:
-        msg = "Table has no rows"
-        raise exc.InvalidTableError(msg)
-    table = list(table)
-
-    header_raw = table.pop(0)
-    if header_raw is None:
-        msg = "First row cannot be None"
-        raise exc.InvalidTableError(msg)
-
-    header = [c.strip("<>^./") for c in header_raw]
-    label_widths = [max(4, len(c)) for c in header]
-    col_widths = [
-        max(len(h), *[len(row[i]) if row else 0 for row in table]) if table else len(h)
-        for i, h in enumerate(header)
-    ]
-
-    # Adjust col widths if sum is over terminal width
-    margin = shutil.get_terminal_size()[0] - sum(col_widths) - len(col_widths) - 2
-    excess: list[int] = []
-    extra = True
-    has_extra: list[bool] = [False] * len(header_raw)
-    for i, cell in enumerate(header_raw):
-        n_label = label_widths[i]
-        if extra and margin > 1:
-            # If there is extra room, add some space to each column
-            col_widths[i] += 2
-            margin -= 2
-            has_extra[i] = True
-        if margin < 0 and cell[-1] == ".":
-            n = max(n_label, col_widths[i] + margin)
-            n_trim = col_widths[i] - n
-            col_widths[i] = n
-            margin += n_trim
-            extra = False
-        excess.append(0 if cell[-1] == "/" else max(0, col_widths[i] - n_label))
-
-    # Distribute excess
-    while margin < 0 and any(excess):
-        for i, e in enumerate(excess):
-            if margin < 0 and e > 0:
-                col_widths[i] -= 1
-                excess[i] -= 1
-                margin += 1
-
-    formats: list[str] = []
-    for cell, n in zip(header_raw, col_widths, strict=True):
-        align = cell[0]
-        align = align if align in "<>^" else ""
-        formats.append(f"{align}{n}")
-    return _table_to_lines(header, table, col_widths, formats, has_extra)
-
-
-def _table_to_lines(
-    header: list[str],
-    table: list[list[str] | None],
-    col_widths: list[int],
-    formats: list[str],
-    has_extra: list[bool],
-) -> list[str]:
-
-    # Print the box
-    lines: list[str] = []
-    lines.append("╭" + "┬".join("─" * n for n in col_widths) + "╮")
-    buf = "│".join(f"{c:^{n}}" for c, n in zip(header, col_widths, strict=True))
-    lines.append("│" + buf + "│")
-    for row in table:
-        if row is None:
-            lines.append("╞" + "╪".join("═" * n for n in col_widths) + "╡")
-            continue
-        formatted_row = [
-            (
-                cell[: col_widths[i] - 1] + "…"
-                if len(cell) > col_widths[i]
-                else f"{{:{formats[i]}}}".format(f" {cell} " if has_extra[i] else cell)
-            )
-            for i, cell in enumerate(row)
-        ]
-        lines.append("│" + "│".join(formatted_row) + "│")
-
-    lines.append("╰" + "┴".join("─" * n for n in col_widths) + "╯")
-    return lines
 
 
 def clamp(

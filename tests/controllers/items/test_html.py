@@ -142,6 +142,30 @@ def test_new(
     assert item.note == "New note"
 
 
+def test_new_accepts_grouped_numeric_value(
+    web_client: WebClient,
+    session: orm.Session,
+) -> None:
+    result, _ = web_client.POST(
+        "items.new",
+        data={"name": "Grouped value", "value": "1,234.567", "note": ""},
+    )
+
+    session.expire_all()
+    item = Item.one()
+    assert "All changes saved" in result
+    assert item.value == Decimal("1234.567")
+
+
+def test_new_rejects_unparseable_value(web_client: WebClient) -> None:
+    result, _ = web_client.POST(
+        "items.new",
+        data={"name": "Bad value", "value": "1,2,3", "note": ""},
+    )
+
+    assert result == base.error("Unable to parse")
+
+
 @pytest.mark.parametrize(
     ("name", "target"),
     [
@@ -203,6 +227,33 @@ def test_item_edit(
     assert item.note == "New note"
 
 
+def test_item_edit_accepts_grouped_numeric_value(
+    web_client: WebClient,
+    session: orm.Session,
+    item: Item,
+) -> None:
+    result, _ = web_client.PUT(
+        ("items.item", {"uri": item.uri}),
+        data={"name": item.name, "value": "1,234.567", "note": ""},
+    )
+
+    session.refresh(item)
+    assert "All changes saved" in result
+    assert item.value == Decimal("1234.567")
+
+
+def test_item_edit_rejects_unparseable_value(
+    web_client: WebClient,
+    item: Item,
+) -> None:
+    result, _ = web_client.PUT(
+        ("items.item", {"uri": item.uri}),
+        data={"name": item.name, "value": "1,2,3", "note": ""},
+    )
+
+    assert result == base.error("Unable to parse")
+
+
 def test_item_edit_error(
     web_client: WebClient,
     item: Item,
@@ -235,6 +286,8 @@ def test_item_delete(web_client: WebClient, item: Item) -> None:
         ("note", " ", ""),
         ("note", "a", "2 characters required"),
         ("value", "1234", ""),
+        ("value", "1,234.567", ""),
+        ("value", "1,2,3", "Unable to parse"),
         ("value", " ", "Required"),
         ("value", "a", "Unable to parse"),
     ],

@@ -18,19 +18,20 @@ description: >
 ## Runtime contract
 
 The image stores SQLite data in `/data`, serves the application on port 8000,
-and exposes Prometheus metrics on port 8001. PostgreSQL is supported by setting
-`DB_PATH` to a PostgreSQL URL; the target database must already exist and
-provide TLS.
+request metrics on port 8001, and database metrics on port 8002. PostgreSQL is
+supported by setting `DB_PATH` to a PostgreSQL URL; the target database must
+already exist and provide TLS.
 
-| Variable           | Default             | Purpose                       |
-| ------------------ | ------------------- | ----------------------------- |
-| `DB_PATH`          | `/data/database.db` | SQLite path or PostgreSQL URL |
-| `DB_WEB_KEY`       | `web-admin`         | Initial web password          |
-| `WEB_PORT`         | `8000`              | Application listener port     |
-| `WEB_PORT_METRICS` | `8001`              | Prometheus listener port      |
-| `WEB_CONCURRENCY`  | CPU count x 2 + 1   | gunicorn workers              |
-| `WEB_N_THREADS`    | `1`                 | Threads per worker            |
-| `WEB_TIMEOUT`      | `30`                | gunicorn timeout in seconds   |
+| Variable              | Default             | Purpose                        |
+| --------------------- | ------------------- | ------------------------------ |
+| `DB_PATH`             | `/data/database.db` | SQLite path or PostgreSQL URL  |
+| `DB_WEB_KEY`          | `web-admin`         | Initial web password           |
+| `WEB_PORT`            | `8000`              | Application listener port      |
+| `WEB_PORT_METRICS`    | `8001`              | Prometheus listener port       |
+| `WEB_PORT_DB_METRICS` | `8002`              | Database metrics listener port |
+| `WEB_CONCURRENCY`     | CPU count x 2 + 1   | gunicorn workers               |
+| `WEB_N_THREADS`       | `1`                 | Threads per worker             |
+| `WEB_TIMEOUT`         | `30`                | gunicorn timeout in seconds    |
 
 ## Change guidance
 

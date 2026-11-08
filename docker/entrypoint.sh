@@ -54,4 +54,7 @@ fi
 # Start server
 export PROMETHEUS_MULTIPROC_DIR=$prom_dir
 export DB_PATH="$database"
+db_metrics_port=${WEB_PORT_DB_METRICS:-8002}
+/home/python/.local/bin/flask --app flask_htmx_template.db_metrics:create_app run \
+  --host 0.0.0.0 --port "$db_metrics_port" &
 /home/python/.local/bin/gunicorn -c gunicorn.conf.py "flask_htmx_template.asgi:create_app()"

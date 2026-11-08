@@ -35,7 +35,11 @@ from flask_htmx_template.controllers.auth import top as auth_top
 from flask_htmx_template.controllers.common import html as common_html
 from flask_htmx_template.controllers.items import html as items_html
 from flask_htmx_template.controllers.items import json as items_json
-from flask_htmx_template.database import PostgresDatabase, SQLiteDatabase
+from flask_htmx_template.database import (
+    DEFAULT_DATABASE_PATH,
+    PostgresDatabase,
+    SQLiteDatabase,
+)
 from flask_htmx_template.models.config import Config, ConfigKey
 from flask_htmx_template.version import __version__
 
@@ -119,7 +123,7 @@ class FlaskExtension:
 
     @classmethod
     def _open_db(cls, config: dict[str, object]) -> Database:
-        s = config.get("PATH", "~/.flask-htmx-template/database.db")
+        s = config.get("PATH", DEFAULT_DATABASE_PATH)
         if not isinstance(s, str):
             raise TypeError
 

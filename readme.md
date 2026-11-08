@@ -19,7 +19,7 @@ A production-ready Flask + HTMX template for building modern web applications wi
 | **JSON API**          | Type-validated JSON endpoints with full error reporting                       |
 | **MCP server**        | Authenticated Streamable HTTP endpoint with typed tool registration           |
 | **CLI**               | `create`, `migrate`, `unlock`, and `change-password`                          |
-| **Metrics**           | Prometheus metrics for the web application                                    |
+| **Metrics**           | Prometheus metrics for the web application and database                       |
 | **Asset pipeline**    | Tailwind CSS v4, JS minification, automatic rebuild on package install        |
 | **Testing**           | 100% coverage enforced, migration tests                                       |
 | **Docker**            | Multi-stage build, non-root user, configurable via environment variables      |

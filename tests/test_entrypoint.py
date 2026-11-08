@@ -32,18 +32,31 @@ class EntrypointRunner:
             "/home/python/.local/bin/gunicorn",
             str(self._bin / "gunicorn"),
         )
+        script = script.replace(
+            "/home/python/.local/bin/flask",
+            str(self._bin / "flask"),
+        )
         self._entrypoint.write_text(script, encoding="utf-8")
         self._entrypoint.chmod(0o755)
-        for command in ("flask_htmx_template", "gunicorn"):
+        for command in ("flask_htmx_template", "flask", "gunicorn"):
             self._write_command(command)
 
     def _write_command(self, command: str) -> None:
         script = """#!/bin/sh
+while ! mkdir "$COMMAND_LOG.lock" 2>/dev/null; do
+  sleep 0.01
+done
 printf '%s' "$(basename "$0")" >> "$COMMAND_LOG"
 for arg in "$@"; do
   printf '\\t%s' "$arg" >> "$COMMAND_LOG"
 done
 printf '\\n' >> "$COMMAND_LOG"
+rmdir "$COMMAND_LOG.lock"
+if [ "$(basename "$0")" = "gunicorn" ]; then
+  while ! grep -q '^flask[[:space:]]' "$COMMAND_LOG"; do
+    sleep 0.01
+  done
+fi
 if [ "${3:-}" = "create" ]; then
   case "${CREATE_RESULT:-success}" in
   success) exit 0 ;;
@@ -76,6 +89,7 @@ exit 0
         database: Path | str,
         *,
         create_result: str = "success",
+        db_metrics_port: str | None = None,
     ) -> subprocess.CompletedProcess[str]:
         environment = os.environ.copy()
         environment.update(
@@ -87,6 +101,8 @@ exit 0
                 "PROMETHEUS_MULTIPROC_DIR": str(self._root / "prometheus"),
             },
         )
+        if db_metrics_port is not None:
+            environment["WEB_PORT_DB_METRICS"] = db_metrics_port
         return subprocess.run(  # ruff: ignore[subprocess-without-shell-equals-true]
             ["/bin/sh", str(self._entrypoint)],
             capture_output=True,
@@ -176,7 +192,29 @@ def test_entrypoint_initializes_database(
         ]
     else:
         assert not password_calls
-    assert entrypoint_runner.commands[-1][0] == "gunicorn"
+    flask_call = next(call for call in entrypoint_runner.commands if call[0] == "flask")
+    assert flask_call[1:4] == [
+        "--app",
+        "flask_htmx_template.db_metrics:create_app",
+        "run",
+    ]
+    assert flask_call[-2:] == ["--port", "8002"]
+    assert any(call[0] == "gunicorn" for call in entrypoint_runner.commands)
+
+
+def test_entrypoint_configures_database_metrics_port(
+    entrypoint_runner: EntrypointRunner,
+) -> None:
+    entrypoint_runner.sqlite_path.touch()
+
+    result = entrypoint_runner.run(
+        entrypoint_runner.sqlite_path,
+        db_metrics_port="9123",
+    )
+
+    assert result.returncode == 0
+    flask_call = next(call for call in entrypoint_runner.commands if call[0] == "flask")
+    assert flask_call[-1] == "9123"
 
 
 def test_entrypoint_stops_on_postgres_creation_failure(

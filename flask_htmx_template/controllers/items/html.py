@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import flask
 
 from flask_htmx_template import exceptions as exc
-from flask_htmx_template import sql, web
+from flask_htmx_template import sql, utils, web
 from flask_htmx_template.controllers import base, json_api
 from flask_htmx_template.controllers.auth import ctx as auth_ctx
 from flask_htmx_template.controllers.items import ctx
@@ -91,12 +91,15 @@ def new() -> str | flask.Response:
             return flask.render_template("items/edit.jinja", item=item)
 
         form = flask.request.form
+        value = utils.evaluate_real_statement(form["value"], precision=None)
+        if value is None:
+            return base.error("Unable to parse")
         try:
             with session.begin_nested():
                 Item.create(
                     name=form["name"].strip(),
                     date_ord=today.toordinal(),
-                    value=Decimal(form["value"]),
+                    value=value,
                     note=form["note"].strip(),
                 )
         except (exc.IntegrityError, exc.InvalidORMValueError) as error:
@@ -122,11 +125,14 @@ def item(uri: str) -> str | werkzeug.Response:
             return flask.redirect(flask.url_for("items.page_all"))
 
         form = flask.request.form
+        value = utils.evaluate_real_statement(form["value"], precision=None)
+        if value is None:
+            return base.error("Unable to parse")
         try:
             with session.begin_nested():
                 item_.name = form["name"].strip()
                 item_.date_ord = datetime.datetime.now(datetime.UTC).date().toordinal()
-                item_.value = Decimal(form["value"])
+                item_.value = value
                 item_.note = form["note"].strip()
         except (exc.IntegrityError, exc.InvalidORMValueError) as error:
             return base.error(error)

@@ -28,7 +28,7 @@ from flask.typing import RouteCallable
 from mcp_types import ToolAnnotations
 
 from flask_htmx_template import exceptions as exc
-from flask_htmx_template import parsing, sql, utils
+from flask_htmx_template import fmt, parsing, sql, utils
 from flask_htmx_template.models.base import BaseEnum
 from flask_htmx_template.version import __version__
 
@@ -711,7 +711,7 @@ def validate_date(
     elif max_future is not None and date > (
         today + datetime.timedelta(days=max_future)
     ):
-        return f"Only up to {utils.format_days(max_future)} in advance"
+        return f"Only up to {fmt.days(max_future)} in advance"
 
     if duplicate is None:
         return ""
@@ -870,7 +870,7 @@ def parse_date(
     elif max_future is not None and date > (
         today + datetime.timedelta(days=max_future)
     ):
-        msg = f"Only up to {utils.format_days(max_future)} in advance"
+        msg = f"Only up to {fmt.days(max_future)} in advance"
         raise exc.InvalidDateError(msg)
 
     return date

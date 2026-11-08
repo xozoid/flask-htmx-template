@@ -5,9 +5,7 @@ import datetime
 import inspect
 import logging
 import pathlib
-import textwrap
 from decimal import Decimal
-from typing import TYPE_CHECKING
 
 import pytest
 
@@ -15,9 +13,6 @@ from flask_htmx_template import exceptions as exc
 from flask_htmx_template import utils
 from flask_htmx_template.models.config import ConfigKey
 from tests import conftest
-
-if TYPE_CHECKING:
-    from tests.conftest import RandomStringGenerator
 
 
 def test_first_party_caller_selects_package_frame(
@@ -53,6 +48,7 @@ def test_camel_to_snake(s: str, c: str) -> None:
         ("-1*2", Decimal(-2)),
         ("1*2", Decimal(2)),
         ("$1,000.00", Decimal("1000.00")),
+        ("1,234.50", Decimal("1234.50")),
         ("£1,000.00 + ¥2,000.00", Decimal("3000.00")),
         ("-1*-2", Decimal(2)),
         ("-1*(-2)", Decimal(2)),
@@ -64,6 +60,12 @@ def test_camel_to_snake(s: str, c: str) -> None:
 )
 def test_evaluate_real_statement(s: str | None, target: Decimal | None) -> None:
     assert utils.evaluate_real_statement(s) == target
+
+
+def test_evaluate_real_statement_without_rounding() -> None:
+    result = utils.evaluate_real_statement("1,234.567", precision=None)
+
+    assert result == Decimal("1234.567")
 
 
 def test_eval_node_unknown() -> None:
@@ -89,43 +91,6 @@ def test_eval_node_rejects_unknown_constant_type() -> None:
 
     with pytest.raises(TypeError, match="Unknown constant type"):
         utils._eval_node(node)
-
-
-@pytest.mark.parametrize(
-    ("d", "target"),
-    [
-        (0, "0 days"),
-        (10, "10 days"),
-        (11, "2 weeks"),
-        (8 * 7, "8 weeks"),
-        (8 * 7 + 1, "2 months"),
-        (int(18 * 365.25 / 12), "18 months"),
-        (int(18 * 365.25 / 12 + 1), "2 years"),
-    ],
-)
-def test_format_days(d: int, target: str) -> None:
-    assert utils.format_days(d) == target
-
-
-def test_format_days_custom_labels(rand_str_generator: RandomStringGenerator) -> None:
-    labels = [rand_str_generator() for _ in range(4)]
-    assert utils.format_days(2, labels=labels) == f"2 {labels[0]}"
-
-
-@pytest.mark.parametrize(
-    ("s", "target"),
-    [
-        (0, "0.0 seconds"),
-        (60, "60.0 seconds"),
-        (90.1, "1.5 minutes"),
-        (5400.1, "1.5 hours"),
-        (86400, "24.0 hours"),
-        (86400 * 4, "96.0 hours"),
-        (86400 * 4.1, "4 days"),
-    ],
-)
-def test_format_seconds(s: float, target: str) -> None:
-    assert utils.format_seconds(s) == target
 
 
 @pytest.mark.parametrize(
@@ -338,159 +303,6 @@ def test_interpolate_linear(
     target: list[Decimal],
 ) -> None:
     assert utils.interpolate_linear(values, 5) == target
-
-
-def test_pretty_table_no_rows() -> None:
-    with pytest.raises(exc.InvalidTableError, match="Table has no rows"):
-        utils.pretty_table([])
-
-
-def test_pretty_table_no_header() -> None:
-    with pytest.raises(exc.InvalidTableError, match="First row cannot be None"):
-        utils.pretty_table([None])
-
-
-@pytest.fixture
-def fixed_terminal(
-    monkeypatch: pytest.MonkeyPatch,
-    width: int,
-    height: int,
-) -> None:
-    def mock_terminal_size(**_: object) -> tuple[int, int]:
-        return width, height
-
-    monkeypatch.setattr("shutil.get_terminal_size", mock_terminal_size)
-
-
-@pytest.mark.parametrize(("width", "height"), [(80, 24)])
-def test_pretty_table_only_header(fixed_terminal: None) -> None:
-    table: list[list[str] | None] = [
-        ["H1", ">H2", "<H3", "^H4", "H5.", "H6/"],
-    ]
-    target = textwrap.dedent(
-        """\
-    ╭────┬────┬────┬────┬────┬────╮
-    │ H1 │ H2 │ H3 │ H4 │ H5 │ H6 │
-    ╰────┴────┴────┴────┴────┴────╯""",
-    )
-    assert "\n".join(utils.pretty_table(table)) == target
-
-
-@pytest.mark.parametrize(("width", "height"), [(80, 24)])
-def test_pretty_table_only_separator(fixed_terminal: None) -> None:
-    table: list[list[str] | None] = [
-        ["H1", ">H2", "<H3", "^H4", "H5.", "H6/"],
-        None,
-    ]
-    target = textwrap.dedent(
-        """\
-    ╭────┬────┬────┬────┬────┬────╮
-    │ H1 │ H2 │ H3 │ H4 │ H5 │ H6 │
-    ╞════╪════╪════╪════╪════╪════╡
-    ╰────┴────┴────┴────┴────┴────╯""",
-    )
-    assert "\n".join(utils.pretty_table(table)) == target
-
-
-@pytest.fixture
-def table() -> list[list[str] | None]:
-    return [
-        ["H1", ">H2", "<H3", "^H4", "H5.", "H6/"],
-        None,
-        ["Short"] * 6,
-        None,
-        ["Long word"] * 6,
-    ]
-
-
-@pytest.mark.parametrize(("width", "height"), [(80, 24)])
-def test_pretty_table_width_80(
-    fixed_terminal: None,
-    table: list[list[str] | None],
-) -> None:
-    target = textwrap.dedent(
-        """\
-    ╭───────────┬───────────┬───────────┬───────────┬───────────┬───────────╮
-    │    H1     │    H2     │    H3     │    H4     │    H5     │    H6     │
-    ╞═══════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-    │ Short     │     Short │ Short     │   Short   │ Short     │ Short     │
-    ╞═══════════╪═══════════╪═══════════╪═══════════╪═══════════╪═══════════╡
-    │ Long word │ Long word │ Long word │ Long word │ Long word │ Long word │
-    ╰───────────┴───────────┴───────────┴───────────┴───────────┴───────────╯""",
-    )
-    assert "\n".join(utils.pretty_table(table)) == target
-
-
-@pytest.mark.parametrize(("width", "height"), [(70, 24)])
-def test_pretty_table_width_70(
-    fixed_terminal: None,
-    table: list[list[str] | None],
-) -> None:
-    target = textwrap.dedent(
-        """\
-    ╭───────────┬───────────┬───────────┬───────────┬─────────┬─────────╮
-    │    H1     │    H2     │    H3     │    H4     │   H5    │   H6    │
-    ╞═══════════╪═══════════╪═══════════╪═══════════╪═════════╪═════════╡
-    │ Short     │     Short │ Short     │   Short   │Short    │Short    │
-    ╞═══════════╪═══════════╪═══════════╪═══════════╪═════════╪═════════╡
-    │ Long word │ Long word │ Long word │ Long word │Long word│Long word│
-    ╰───────────┴───────────┴───────────┴───────────┴─────────┴─────────╯""",
-    )
-    assert "\n".join(utils.pretty_table(table)) == target
-
-
-@pytest.mark.parametrize(("width", "height"), [(60, 24)])
-def test_pretty_table_width_60(
-    fixed_terminal: None,
-    table: list[list[str] | None],
-) -> None:
-    target = textwrap.dedent(
-        """\
-    ╭─────────┬─────────┬─────────┬─────────┬───────┬─────────╮
-    │   H1    │   H2    │   H3    │   H4    │  H5   │   H6    │
-    ╞═════════╪═════════╪═════════╪═════════╪═══════╪═════════╡
-    │Short    │    Short│Short    │  Short  │Short  │Short    │
-    ╞═════════╪═════════╪═════════╪═════════╪═══════╪═════════╡
-    │Long word│Long word│Long word│Long word│Long w…│Long word│
-    ╰─────────┴─────────┴─────────┴─────────┴───────┴─────────╯""",
-    )
-    assert "\n".join(utils.pretty_table(table)) == target
-
-
-@pytest.mark.parametrize(("width", "height"), [(50, 24)])
-def test_pretty_table_width_50(
-    fixed_terminal: None,
-    table: list[list[str] | None],
-) -> None:
-    target = textwrap.dedent(
-        """\
-    ╭───────┬───────┬───────┬────────┬────┬─────────╮
-    │  H1   │  H2   │  H3   │   H4   │ H5 │   H6    │
-    ╞═══════╪═══════╪═══════╪════════╪════╪═════════╡
-    │Short  │  Short│Short  │ Short  │Sho…│Short    │
-    ╞═══════╪═══════╪═══════╪════════╪════╪═════════╡
-    │Long w…│Long w…│Long w…│Long wo…│Lon…│Long word│
-    ╰───────┴───────┴───────┴────────┴────┴─────────╯""",
-    )
-    assert "\n".join(utils.pretty_table(table)) == target
-
-
-@pytest.mark.parametrize(("width", "height"), [(10, 24)])
-def test_pretty_table_width_10(
-    fixed_terminal: None,
-    table: list[list[str] | None],
-) -> None:
-    target = textwrap.dedent(
-        """\
-    ╭────┬────┬────┬────┬────┬─────────╮
-    │ H1 │ H2 │ H3 │ H4 │ H5 │   H6    │
-    ╞════╪════╪════╪════╪════╪═════════╡
-    │Sho…│Sho…│Sho…│Sho…│Sho…│Short    │
-    ╞════╪════╪════╪════╪════╪═════════╡
-    │Lon…│Lon…│Lon…│Lon…│Lon…│Long word│
-    ╰────┴────┴────┴────┴────┴─────────╯""",
-    )
-    assert "\n".join(utils.pretty_table(table)) == target
 
 
 @pytest.mark.parametrize(

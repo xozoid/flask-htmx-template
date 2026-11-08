@@ -7,7 +7,6 @@ import functools
 import json
 import logging
 import os
-from decimal import Decimal
 from pathlib import Path
 from typing import Any, cast, override, TYPE_CHECKING
 
@@ -21,7 +20,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from flask_htmx_template import controllers
 from flask_htmx_template import exceptions as exc
-from flask_htmx_template import sql, utils, web_assets
+from flask_htmx_template import fmt, sql, utils, web_assets
 from flask_htmx_template.controllers import base
 from flask_htmx_template.controllers.api_docs import ctx as api_docs_ctx
 from flask_htmx_template.controllers.api_docs import html as api_docs_html
@@ -189,23 +188,18 @@ class FlaskExtension:
 
     @classmethod
     def _init_jinja_env(cls, env: jinja2.Environment) -> None:
-        env.filters["seconds"] = utils.format_seconds
-        env.filters["days"] = utils.format_days
+        env.filters["seconds"] = fmt.seconds
+        env.filters["days"] = fmt.days
         env.filters["days_abv"] = functools.partial(
-            utils.format_days,
+            fmt.days,
             labels=["days", "wks", "mos", "yrs"],
         )
-        env.filters["comma"] = lambda x: f"{x:,.2f}"
-        env.filters["qty"] = lambda x: f"{x:,.6f}"
+        env.filters["comma"] = fmt.comma
+        env.filters["qty"] = fmt.qty
+        env.filters["price"] = fmt.price
+        env.filters["percent"] = fmt.percent
         env.filters["tojson"] = base.ctx_to_json
-        env.filters["input_value"] = lambda x: str(x or "").rstrip("0").rstrip(".")
-
-        def percent(x: Decimal | float | object) -> str:
-            if not isinstance(x, Decimal | float):
-                raise TypeError
-            return f"{x * 100:5.2f}%"
-
-        env.filters["percent"] = percent
+        env.filters["input_value"] = fmt.input_value
 
     @classmethod
     def _init_metrics(cls, app: flask.Flask) -> None:

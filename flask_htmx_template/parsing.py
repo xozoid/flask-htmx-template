@@ -7,6 +7,8 @@ import re
 from decimal import Decimal
 
 _REGEX_REAL_CLEAN = re.compile(r"[^0-9\.]")
+_REGEX_REAL_GROUPED = re.compile(r"(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d*)?\Z")
+_REGEX_REAL_OPERATORS = re.compile(r"[()+\-*/]")
 
 
 def real(s: str | None, precision: int | None = 2) -> Decimal | None:
@@ -22,6 +24,12 @@ def real(s: str | None, precision: int | None = 2) -> Decimal | None:
     """
     if s is None:
         return None
+    # NOTE: Validate each arithmetic operand separately so an expression with
+    # multiple grouped amounts does not merge their digits before checking.
+    for operand in _REGEX_REAL_OPERATORS.split(s):
+        numeric = re.sub(r"[^0-9,.]", "", operand)
+        if "," in numeric and _REGEX_REAL_GROUPED.fullmatch(numeric) is None:
+            return None
     clean = _REGEX_REAL_CLEAN.sub("", s)
     if not clean:
         return None

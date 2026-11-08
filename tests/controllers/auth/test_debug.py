@@ -10,6 +10,8 @@ from flask_htmx_template.controllers.auth import debug
 if TYPE_CHECKING:
     import flask
 
+    from tests.controllers.conftest import WebClient
+
 
 def test_debug_login_rejects_when_debug_is_disabled(flask_app: flask.Flask) -> None:
     flask_app.debug = False
@@ -19,6 +21,16 @@ def test_debug_login_rejects_when_debug_is_disabled(flask_app: flask.Flask) -> N
             debug.debug_login()
     finally:
         flask_app.debug = True
+
+
+def test_debug_provider_urls_and_endpoints(flask_app: flask.Flask) -> None:
+    with flask_app.test_request_context("/?next=%2Fitems"):
+        login_url = debug.DebugAuth.login_url("/items")
+        logout_url = debug.DebugAuth.logout_url("/items")
+
+    assert login_url == "/login?next=/items"
+    assert logout_url == "/h/logout?next=/items"
+    assert debug.DebugAuth.endpoints() == []
 
 
 @pytest.mark.parametrize(
@@ -51,3 +63,9 @@ def test_debug_login_redirects_when_debug_is_enabled(
     assert response.location == target
     assert logged_in
     assert logged_in[0][1] is True
+
+
+def test_debug_login_rejects_blank_username(web_client: WebClient) -> None:
+    result, _ = web_client.POST("auth.debug_login", data={"username": "   "})
+
+    assert "Username must not be blank" in result

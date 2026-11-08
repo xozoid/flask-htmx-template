@@ -41,3 +41,9 @@ def test_json_api_allows_valid_bearer_token(
     urls = result["urls"]
     assert isinstance(urls, dict)
     assert "/j/items" in urls
+
+
+def test_json_login_rejects_invalid_bearer_token(web_client: WebClient) -> None:
+    result, _ = web_client.POST_J("auth.json_login", rc=401)
+
+    assert result == {"errors": ["Bearer token required"]}

@@ -29,3 +29,27 @@ def test_write_permission_is_independent(session: orm.Session) -> None:
 def test_short_username_is_rejected(session: orm.Session) -> None:
     with pytest.raises(exc.InvalidORMValueError):
         User.create(username="a")
+
+
+def test_nullable_username_skips_string_validation(session: orm.Session) -> None:
+    user = User.create(username="nullable")
+
+    username = user.validate_strings("username", None)
+
+    assert username is None
+
+
+def test_read_permission_setter_updates_value(session: orm.Session) -> None:
+    user = User.create(username="permissions")
+
+    user.item_read = True
+
+    assert user.item_read
+
+
+def test_write_permission_setter_updates_value(session: orm.Session) -> None:
+    user = User.create(username="permissions")
+
+    user.item_write = True
+
+    assert user.item_write

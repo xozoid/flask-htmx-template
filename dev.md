@@ -113,15 +113,20 @@ password, runs migrations, and starts gunicorn with the ASGI application.
 
 ### Runtime configuration
 
-| Variable           | Default             | Purpose                                   |
-| ------------------ | ------------------- | ----------------------------------------- |
-| `DB_PATH`          | `/data/database.db` | SQLite path or PostgreSQL URL             |
-| `DB_WEB_KEY`       | `web-admin`         | Web password for a newly created database |
-| `WEB_PORT`         | `8000`              | Application listener port                 |
-| `WEB_PORT_METRICS` | `8001`              | Prometheus metrics listener port          |
-| `WEB_CONCURRENCY`  | CPU count x 2 + 1   | gunicorn worker count                     |
-| `WEB_N_THREADS`    | `1`                 | Threads per worker                        |
-| `WEB_TIMEOUT`      | `30`                | gunicorn silent timeout, in seconds       |
+| Variable                       | Default             | Purpose                                                                     |
+| ------------------------------ | ------------------- | --------------------------------------------------------------------------- |
+| `DB_PATH`                      | `/data/database.db` | SQLite path or PostgreSQL URL                                               |
+| `DB_WEB_KEY`                   | `web-admin`         | Web password for a newly created database                                   |
+| `WEB_PORT`                     | `8000`              | Application listener port                                                   |
+| `WEB_PORT_METRICS`             | `8001`              | Prometheus metrics listener port                                            |
+| `WEB_CONCURRENCY`              | CPU count x 2 + 1   | gunicorn worker count                                                       |
+| `WEB_N_THREADS`                | `1`                 | Threads per worker                                                          |
+| `WEB_TIMEOUT`                  | `30`                | gunicorn silent timeout, in seconds                                         |
+| `FLASK_HTMX_TEMPLATE_PROXYFIX` | unset               | Trust one proxy hop for forwarded client address and scheme when set to `1` |
+
+Enable `FLASK_HTMX_TEMPLATE_PROXYFIX` only when the application receives
+traffic through a trusted proxy. It trusts one `X-Forwarded-For` value and one
+`X-Forwarded-Proto` value.
 
 ### PostgreSQL deployment
 

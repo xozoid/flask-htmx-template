@@ -189,6 +189,7 @@ ignore = [
   "undocumented-public-module",
 ]
 "flask_htmx_template/commands/*.py" = ["import-outside-top-level", "print"]
+"flask_htmx_template/db_metrics.py" = ["module-import-not-at-top-of-file"]
 "flask_htmx_template/controllers/api_docs/ctx.py" = ["blind-except"]
 "flask_htmx_template/database.py" = ["private-member-access"]
 "flask_htmx_template/mcp.py" = ["blind-except"]

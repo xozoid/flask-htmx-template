@@ -25,6 +25,9 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
 
+DEFAULT_DATABASE_PATH = "~/.flask-htmx-template/database.db"
+
+
 class Database(ABC):
     """Database base class."""
 

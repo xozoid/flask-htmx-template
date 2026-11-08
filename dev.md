@@ -99,12 +99,13 @@ raise `TypeError`.
 
 The Dockerfile builds a wheel in a Python 3.12 build stage, then installs it in
 a non-root runtime image. The runtime image stores SQLite data in `/data` and
-exposes the application on port 8000 and Prometheus metrics on port 8001.
+exposes the application on port 8000, request metrics on port 8001, and database
+metrics on port 8002.
 
 ```shell
 docker build --tag flask_htmx_template .
 docker run --detach --name flask_htmx_template \
-  --publish 8000:8000 --publish 8001:8001 \
+  --publish 8000:8000 --publish 8001:8001 --publish 8002:8002 \
   --volume flask_htmx_template-data:/data flask_htmx_template
 ```
 
@@ -119,6 +120,7 @@ password, runs migrations, and starts gunicorn with the ASGI application.
 | `DB_WEB_KEY`                   | `web-admin`         | Web password for a newly created database                                   |
 | `WEB_PORT`                     | `8000`              | Application listener port                                                   |
 | `WEB_PORT_METRICS`             | `8001`              | Prometheus metrics listener port                                            |
+| `WEB_PORT_DB_METRICS`          | `8002`              | Database metrics listener port                                              |
 | `WEB_CONCURRENCY`              | CPU count x 2 + 1   | gunicorn worker count                                                       |
 | `WEB_N_THREADS`                | `1`                 | Threads per worker                                                          |
 | `WEB_TIMEOUT`                  | `30`                | gunicorn silent timeout, in seconds                                         |

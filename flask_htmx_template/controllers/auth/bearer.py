@@ -102,7 +102,10 @@ def _setting(keys: tuple[str, ...], *, default: str | None = None) -> str | None
 
     """
     for key in keys:
-        value = flask.current_app.config.get(key) if flask.has_app_context() else None
+        value = None
+        if flask.has_app_context():
+            config = cast("Mapping[str, object]", flask.current_app.config)
+            value = config.get(key)
         if isinstance(value, str) and value:
             return value
     for key in keys:

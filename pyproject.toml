@@ -148,6 +148,7 @@ exclude = ["**/__pycache__"]
 include = ["flask_htmx_template", "tests", "tools", "typings"]
 typeCheckingMode = "strict"
 venvPath = "."
+venv = ".venv"
 
 reportUnknownArgumentType = "warning"
 reportUnknownLambdaType = "warning"

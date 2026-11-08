@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     import time_machine
-    from pytest_postgresql.executors import PostgreSQLExecutor
+    from pytest_postgresql.executor import PostgreSQLExecutor
 
     from flask_htmx_template.database import Database
 

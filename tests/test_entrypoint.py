@@ -43,20 +43,12 @@ class EntrypointRunner:
 
     def _write_command(self, command: str) -> None:
         script = """#!/bin/sh
-attempts=0
-while ! mkdir "$COMMAND_LOG.lock" 2>/dev/null; do
-  attempts=$((attempts + 1))
-  if [ "$attempts" -ge 500 ]; then
-    exit 1
-  fi
-  sleep 0.01
-done
+COMMAND_LOG="$COMMAND_LOG.$(basename "$0")"
 printf '%s' "$(basename "$0")" >> "$COMMAND_LOG"
 for arg in "$@"; do
   printf '\\t%s' "$arg" >> "$COMMAND_LOG"
 done
 printf '\\n' >> "$COMMAND_LOG"
-rmdir "$COMMAND_LOG.lock"
 if [ "${3:-}" = "create" ]; then
   case "${CREATE_RESULT:-success}" in
   success) exit 0 ;;
@@ -117,9 +109,17 @@ exit 0
     @property
     def commands(self) -> list[list[str]]:
         """Command invocations recorded by the stubs."""
-        if not self._log.exists():
-            return []
-        return [line.split("\t") for line in self._log.read_text().splitlines()]
+        # NOTE: Server stubs run concurrently, so each command has its own log.
+        logs = (
+            self._log.with_name(f"{self._log.name}.{command}")
+            for command in ("flask_htmx_template", "flask", "gunicorn")
+        )
+        return [
+            line.split("\t")
+            for log in logs
+            if log.exists()
+            for line in log.read_text().splitlines()
+        ]
 
 
 @pytest.fixture

@@ -43,7 +43,12 @@ class EntrypointRunner:
 
     def _write_command(self, command: str) -> None:
         script = """#!/bin/sh
+attempts=0
 while ! mkdir "$COMMAND_LOG.lock" 2>/dev/null; do
+  attempts=$((attempts + 1))
+  if [ "$attempts" -ge 500 ]; then
+    exit 1
+  fi
   sleep 0.01
 done
 printf '%s' "$(basename "$0")" >> "$COMMAND_LOG"
@@ -52,11 +57,6 @@ for arg in "$@"; do
 done
 printf '\\n' >> "$COMMAND_LOG"
 rmdir "$COMMAND_LOG.lock"
-if [ "$(basename "$0")" = "gunicorn" ]; then
-  while ! grep -q '^flask[[:space:]]' "$COMMAND_LOG"; do
-    sleep 0.01
-  done
-fi
 if [ "${3:-}" = "create" ]; then
   case "${CREATE_RESULT:-success}" in
   success) exit 0 ;;
@@ -111,6 +111,7 @@ exit 0
             env=environment,
             shell=False,
             text=True,
+            timeout=10,
         )
 
     @property
